@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dns-benchmark
+  name: dns-benchmark
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dns-benchmark
+  template:
+    metadata:
+      labels:
+        app: dns-benchmark
+    spec:
+      containers:
+      - image: yudiandreanp/dnsbenchmark:0.1
+        imagePullPolicy: IfNotPresent
+        name: dns-benchmark
+        command:
+        - /dnsbenchmark
+        args:
+        - "kube-dns.kube-system.svc.cluster.local:53"
+        - "50"
+        - "kubernetes.default"
+        resources:
+          requests:
+            cpu: "50m"
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 60
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - dns-benchmark
+              topologyKey: topology.kubernetes.io/hostname
